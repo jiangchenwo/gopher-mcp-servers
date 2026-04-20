@@ -1,0 +1,26 @@
+{
+  "skill_name": "gopher-grades",
+  "evals": [
+    {
+      "id": 0,
+      "name": "find-easy-upper-level-cs",
+      "prompt": "hey so i need to take 2 more upper level CS courses (like 3000-4000 level) to finish my major but honestly i'm pretty burnt out and just want to graduate with a decent gpa. can you help me find some courses that are interesting but not gonna destroy my gpa? preferably something above 3.5 average. i'm fine with any topic as long as it's not super theoretical math heavy stuff",
+      "expected_output": "A curated list of 3000-4000 level CSCI courses with average GPA above 3.5, including course codes, names, GPA statistics, and brief recommendations highlighting which are less math-heavy",
+      "files": []
+    },
+    {
+      "id": 1,
+      "name": "research-professor-before-registration",
+      "prompt": "I'm trying to decide between two sections of CSCI 5521 (machine learning) for spring semester. One is taught by Professor Chen and the other by Professor Liu. Can you look up their teaching history, grade distributions, and ratings? I want to know which one is better for actually learning the material (not just getting an easy A), and also which one has more reasonable workload since I'll be taking 3 other grad courses",
+      "expected_output": "Detailed comparison of Prof. Chen vs Prof. Liu for CSCI 5521, including their average GPAs for this course, Rate My Professor scores, student ratings (especially Deep Understanding and Effort Reasonable), grade distributions, and a recommendation based on learning quality vs workload",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "fulfill-liberal-education-requirement",
+      "prompt": "ok so im a junior in computer science and i still haven't done my social sciences lib ed requirement (i know i know i kept putting it off). Registration is next week and I need something that (1) actually fulfills the social science requirement, (2) isn't gonna take too much time because im taking algorithm design and systems which are both really demanding, and (3) maybe actually teaches something useful? what are my options",
+      "expected_output": "List of Social Sciences liberal education courses sorted by GPA/difficulty, with recommendations for courses that are interesting and manageable alongside heavy CS courseload. Should include course codes, names, GPA stats, and brief descriptions of what makes each one a good fit",
+      "files": []
+    }
+  ]
+}
