@@ -1,6 +1,6 @@
 import sqlite3, json
 
-def get_all_dept_abbr_name(db_file: str) -> list:
+def get_all_dept_abbr_name(db_file: str) -> dict:
     """
     Retrieve all unique department abbreviations and corresponding full department name from the courses table in the specified SQLite database.
 

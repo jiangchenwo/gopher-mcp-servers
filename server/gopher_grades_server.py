@@ -7,10 +7,10 @@ import os
 import logging
 from typing import List, Dict, Any, Literal, Set
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import re # string manipulation
 
-from utils import parse_json_field, row_to_dict, calculate_grades_stats, term_to_name, get_prefixes_for_level
+from utils import parse_json_field, row_to_dict, calculate_grades_stats, term_to_name, name_to_term, get_prefixes_for_level
 
 from fastmcp import FastMCP, Context
 
@@ -119,12 +119,8 @@ class DbContext:
     """ Database context for managing queries and results."""
     db: Database
     last_query: str = ""
-    last_result: Dict[str, Any] = None
-    query_history: List[str] = None
-
-    def __post_init__(self):
-        if self.query_history is None:
-            self.query_history = []
+    last_result: Dict[str, Any] = field(default_factory=dict)
+    query_history: List[str] = field(default_factory=list)
     
 @asynccontextmanager
 async def db_lifespan(server: FastMCP) -> AsyncIterator[DbContext]:
@@ -167,9 +163,10 @@ async def search_courses(
     limit: int = 20,
     dept_abbr: str = "",
     course_num: str = "",
-    level: List[Literal[1,2,3,4,5,6,7,8,9]] | List[Literal["undergraduate", "master", "doctoral"]] = None,
+    level: List[Literal[1,2,3,4,5,6,7,8,9]] | List[Literal["undergraduate", "master", "doctoral"]] = [],
     min_gpa: float = -1,
-    max_gpa: float = 5
+    max_gpa: float = 5,
+    terms: List[int | str] = []
 ) -> Dict[str, Any]:
     """
     Search for courses based on various criteria, including department abbreviation, course number, course level, average GPA range (minimum average gpa or maximum average gpa), and a general search term. Get course details and grade statistics.
@@ -178,16 +175,19 @@ async def search_courses(
         - Search by department abbreviation: dept_abbr="CSCI"
             - Complete list of department abbreviations can be found in the tool "get_abbreviations_and_terms"
         - Search by course number: course_num="5511"
-        - Search by general term: search_term="Machine Learning"
+        - Search by keyword in course name/description: search_term="Machine Learning"
         - Filter by average GPA range: min_gpa=3.0, max_gpa=4.0
             - Find easy courses (with high average GPA): min_gpa=3.5
             - Find hard courses (with low average GPA): max_gpa=2.5
-        - Filter by course level: 
+        - Filter by course level:
             - level={"undergraduate", "master"} for both undergraduate and master level courses
             - level={3, 4} for 3000-4999 level courses
+        - Filter by semesters offered:
+            - terms=["Fall 2023"] for courses offered in Fall 2023
+            - terms=["Spring 2024", "Fall 2024"] for courses offered in either semester
 
     Args:
-        search_term: A general search term to match department codes, course numbers, or descriptions (e.g., "CSCI", "5511", "Machine Learning").
+        search_term: A keyword to search course names and descriptions (e.g., "Machine Learning", "data structures"). Use dept_abbr and course_num for department/number filtering.
         campus: The campus code to filter courses (default: UMNTC for Twin Cities).
         limit: The maximum number of results to return (default: 20).
         dept_abbr: An optional filter for department abbreviation (e.g., "CSCI").
@@ -195,6 +195,7 @@ async def search_courses(
         course_level: An optional filter for course level.
         min_gpa: An optional filter for the minimum average GPA of courses.
         max_gpa: An optional filter for the maximum average GPA of courses.
+        terms: An optional list of semesters to filter by. Each entry is either a term name string like "Fall 2023", "Spring 2024", "Summer 2024", or a raw term integer. Only courses offered in at least one of the specified semesters are returned.
 
     Returns:
         A dictionary containing the count of matching courses and corresponding course details including 
@@ -242,16 +243,29 @@ async def search_courses(
             conditions.append(f"SUBSTR(course_num, 1, 1) IN ({placeholders})")
             query_params.extend(prefixes)
     
+    # Add semester/term filter if provided
+    if terms:
+        term_ints = []
+        for t in terms:
+            if isinstance(t, int):
+                term_ints.append(t)
+            else:
+                parsed = name_to_term(t)
+                if parsed is not None:
+                    term_ints.append(parsed)
+        if term_ints:
+            placeholders = ','.join('?' for _ in term_ints)
+            conditions.append(
+                f"id IN (SELECT DISTINCT d.class_id FROM distribution d "
+                f"JOIN termdistribution t ON d.id = t.dist_id WHERE t.term IN ({placeholders}))"
+            )
+            query_params.extend(term_ints)
+
     # Add search term conditions if provided
     if search_term:
         search_pattern = f"%{search_term.replace(' ', '')}%"
-        search_conditions = [
-            "dept_abbr || course_num LIKE ?",
-            "REPLACE(class_desc, ' ', '') LIKE ?",
-            "dept_abbr LIKE ?"
-        ]
-        conditions.append(f"({' OR '.join(search_conditions)})")
-        query_params.extend([search_pattern, search_pattern, search_pattern])
+        conditions.append("(REPLACE(course_name, ' ', '') LIKE ? OR REPLACE(course_description, ' ', '') LIKE ?)")
+        query_params.extend([search_pattern, search_pattern])
     
     # Build the complete query
     where_clause = " AND ".join(conditions)
@@ -434,7 +448,7 @@ async def search_professors(
         query_params.append(search_pattern)
 
     if not conditions:
-        return {"error": "Please provide either professor_name or professor_id."}
+        return [{"error": "Please provide either professor_name or professor_id."}]
     
     where_clause = " AND ".join(conditions)
     query_str = f"""
@@ -661,6 +675,34 @@ async def get_liberal_education_courses(
         "courses": courses
     }
 
+@app.tool()
+async def query_database(ctx: Context, sql: str) -> Dict[str, Any]:
+    """
+    Execute a raw SELECT query against the GopherGrades SQLite database and return the results.
+    Only SELECT statements are permitted.
+
+    Use this tool only when the other tools cannot answer the question. Prefer the purpose-built
+    tools (search_courses, get_grades_of_a_course, search_professors, etc.) for all typical use
+    cases.  Consult the database schema reference before writing a query.
+
+    Args:
+        sql: A SELECT SQL statement to execute against the database.
+
+    Returns:
+        A dictionary with "rows" (list of result dicts) and "row_count".
+
+    Raises:
+        ValueError: If the statement is not a SELECT query.
+    """
+    stripped = sql.strip()
+    if not re.match(r"(?i)^\s*SELECT\b", stripped):
+        raise ValueError("Only SELECT statements are allowed.")
+
+    db_context = ctx.request_context.lifespan_context
+    rows = await db_context.db.query(stripped, context=db_context)
+    result = [dict(row) for row in rows] if rows else []
+    return {"rows": result, "row_count": len(result)}
+
 # @app.tool()
 # async def get_database_stats(ctx: Context) -> Dict[str, Any]:
 #     """
@@ -708,7 +750,7 @@ async def resource_abbreviations_and_terms(ctx: Context) -> Dict[str, Any]:
         data = json.loads(content)
         return data
     
-@app.tool(enabled=True)
+@app.tool(enabled=False)
 async def get_abbreviations_and_terms(ctx: Context) -> Dict[str, Any]:
     """Get abbreviations, department code and academic terms"""
     
@@ -733,7 +775,7 @@ async def get_grades_stats(grades: Dict[str, int]) -> Dict[str, Any]:
     """
     return calculate_grades_stats(grades)
 
-@app.tool(enabled=False) # Not used by llm 
+@app.tool(enabled=False) # Not used by llm
 async def get_query_logs(ctx: Context) -> Dict[str, Any]:
     """
     Get the current query logs from the database context

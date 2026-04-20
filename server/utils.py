@@ -152,6 +152,22 @@ def get_prefixes_for_level(level: List[Literal["undergraduate", "master", "docto
         prefixes.extend([str(i) for i in range(7, 10)]) # 7000-9999
     return prefixes
 
+def name_to_term(term_name: str) -> int | None:
+    """Convert a term name like 'Fall 2023' to its integer encoding."""
+    parts = term_name.strip().split()
+    if len(parts) != 2:
+        return None
+    season, year_str = parts[0].lower(), parts[1]
+    try:
+        year = int(year_str)
+    except ValueError:
+        return None
+    season_map = {"spring": 3, "summer": 5, "fall": 9}
+    digit = season_map.get(season)
+    if digit is None:
+        return None
+    return (year - 1900) * 10 + digit
+
 def term_to_name(term: int):
     retVal = ""
     if term % 10 == 5:

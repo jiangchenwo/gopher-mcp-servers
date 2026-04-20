@@ -6,8 +6,14 @@ dist/
 wheels/
 *.egg-info
 
-# Virtual environments
-.venv
+# Environments & tooling
+.env
+.venv/
+venv/
+.idea/
+.vscode/
+.claude/
+CLAUDE.md
 
 # MacOS
 **/.DS_Store
