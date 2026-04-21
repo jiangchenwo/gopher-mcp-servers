@@ -750,7 +750,7 @@ async def resource_abbreviations_and_terms(ctx: Context) -> Dict[str, Any]:
         data = json.loads(content)
         return data
     
-@app.tool(enabled=False)
+@app.tool(enabled=True)
 async def get_abbreviations_and_terms(ctx: Context) -> Dict[str, Any]:
     """Get abbreviations, department code and academic terms"""
     

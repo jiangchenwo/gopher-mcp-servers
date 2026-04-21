@@ -6,15 +6,22 @@ Gopher Grades MCP is a Python-based Model Context Protocol (MCP) server that ena
 
 Gopher grades MCP server provides the following tools: 
 
-| Tool Name                    | Description                                      |
-|------------------------------|--------------------------------------------------|
-| `search_courses`             | Find UMN courses by department, course number, level, GPA, and keywords. Get course details and grade statistics.                   |
-| `get_grades_of_a_course`     | Retrieve detailed grade distributions for a specific course, including breakdowns by professor and term, and liberal education requirements.             |
-| `search_professors`          | Look up professors by name or ID, including Rate My Professor scores, difficulty ratings, and courses taught.             |
-| `get_grades_of_a_professor`  | Get overall and per-course/term grade statistics for a professor.                  |
-| `get_liberal_education_courses` | List courses that fulfill a specific liberal education requirement.    |
-| `get_abbreviations_and_terms`   | Access department codes, academic terms and abbreviations.       |
+| Tool Name                       | Description                                                                                          |
+|---------------------------------|------------------------------------------------------------------------------------------------------|
+| `search_courses`                | Find UMN courses by department, course number, level, GPA, and keywords. Get course details and grade statistics. |
+| `get_grades_of_a_course`        | Retrieve detailed grade distributions for a specific course, including breakdowns by professor and term, and liberal education requirements. |
+| `search_professors`             | Look up professors by name or ID, including Rate My Professor scores, difficulty ratings, and courses taught. |
+| `get_grades_of_a_professor`     | Get overall and per-course/term grade statistics for a professor.                                    |
+| `get_liberal_education_courses` | List courses that fulfill a specific liberal education requirement.                                   |
+| `get_abbreviations_and_terms`   | Access department codes, academic terms and abbreviations.                                           |
+| `query_database`                | Execute a raw `SELECT` query directly against the database for custom analysis not covered by other tools. |
 
+
+## Agent Skill
+
+A agent skill is included in the `gopher-grades-skill` folder. When active, it guides LLM on tool selection, query strategies, and data interpretation for this MCP server.
+
+To [add the skill](https://docs.github.com/en/copilot/how-tos/use-copilot-agents/cloud-agent/add-skills), copy the `gopher-grades-skill` folder into the `skills/` directory of your app. 
 
 ## Installation & Setup
 
@@ -26,8 +33,8 @@ Follow the steps for your platform.
 
 #### Claude Desktop (Recommended)
 
-- Download and double click [this desktop extension file](gopher-grades-mcp-extension.dxt). Then Claude Desktop should have a pop up window letting you install `Gopher Grades`.
-- Enable the `Gopher Grades` tool on Claude Desktop as shown in the screenshot and start chatting. <div align="left">
+- Download and double click [this desktop extension file](gopher-mcp-servers.mcpb). Then Claude Desktop should have a pop up window letting you install `Gopher Grades MCP`.
+- Enable the `Gopher Grades MCP` tool on Claude Desktop as shown in the screenshot and start chatting. <div align="left">
 <img src="assets/claude-mcp-setup.png" alt="setup" width="50%">
 </div>
 
