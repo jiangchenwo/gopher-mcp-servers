@@ -21,6 +21,13 @@
       "prompt": "ok so im a junior in computer science and i still haven't done my social sciences lib ed requirement (i know i know i kept putting it off). Registration is next week and I need something that (1) actually fulfills the social science requirement, (2) isn't gonna take too much time because im taking algorithm design and systems which are both really demanding, and (3) maybe actually teaches something useful? what are my options",
       "expected_output": "List of Social Sciences liberal education courses sorted by GPA/difficulty, with recommendations for courses that are interesting and manageable alongside heavy CS courseload. Should include course codes, names, GPA stats, and brief descriptions of what makes each one a good fit",
       "files": []
+    },
+    {
+      "id": 3,
+      "name": "university-wide-top-professors",
+      "prompt": "random question but is there a way to see which professors at UMN have the absolute highest rate my professor scores overall? like not for one specific class, just across the whole school. give me the top 15 or so. trying to figure out who the legendary profs are before i build my schedule",
+      "expected_output": "A ranked list of ~15 UMN professors with the highest Rate My Professor scores university-wide. Because the purpose-built search_professors tool requires a name or ID and can't produce a global ranking, the correct path is query_database with a SELECT against the professor table ordered by RMP_score (after consulting the DB schema reference). Results presented as a clean ranked list with names and scores.",
+      "files": []
     }
   ]
 }
